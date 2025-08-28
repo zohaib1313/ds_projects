@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bluu Assistant</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
+    h1 { color: #2c3e50; }
+    #conversation { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; background: white; }
+    .user { color: blue; margin: 5px 0; }
+    .ai { color: green; margin: 5px 0; }
+    button { padding: 10px 15px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>🎤 Blue Assistant</h1>
+  <div id="conversation"></div>
+  <button id="startBtn">Start Speaking</button>
+  <button id="stopBtn">Stop</button>
+
+  <script>
+    const conversationDiv = document.getElementById("conversation");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+
+    // WebSocket connection to FastAPI backend
+    const ws = new WebSocket("ws://localhost:8000/ws");
+
+    ws.onopen = () => {
+      console.log("✅ WebSocket connected");
+    };
+
+    ws.onmessage = (event) => {
+      const aiText = event.data;
+      appendMessage("Bluu", aiText, "ai");
+      speak(aiText); // speak AI response
+    };
+
+    ws.onclose = () => {
+      console.log("❌ WebSocket disconnected");
+    };
+
+    // Append messages to conversation box
+    function appendMessage(sender, text, cls) {
+      const p = document.createElement("p");
+      p.className = cls;
+      p.textContent = `${sender}: ${text}`;
+      conversationDiv.appendChild(p);
+      conversationDiv.scrollTop = conversationDiv.scrollHeight;
+    }
+
+    // Speech Recognition (Web Speech API)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+
+      recognition.onresult = (event) => {
+        let interimTranscript = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            appendMessage("You", transcript, "user");
+            ws.send(transcript); // send to backend
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        if (interimTranscript) {
+          console.log("Interim:", interimTranscript);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+      };
+    } else {
+      alert("Your browser does not support Speech Recognition API.");
+    }
+
+    startBtn.onclick = () => {
+      if (recognition) recognition.start();
+    };
+
+    stopBtn.onclick = () => {
+      if (recognition) recognition.stop();
+    };
+
+    // Text-to-Speech (Web Speech API)
+    function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      utterance.lang = "en-US";
+      window.speechSynthesis.speak(utterance);
+    }
+  </script>
+</body>
+</html>

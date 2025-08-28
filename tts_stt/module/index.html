@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>STT & TTS Demo</title>
+  <style>
+    #conversation { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; }
+    .user { color: blue; }
+    .ai { color: green; }
+  </style>
+</head>
+<body>
+  <h2>🎤 STT & TTS Demo</h2>
+  <div id="conversation"></div>
+  <input type="text" id="ttsInput" placeholder="Type text to speak">
+  <button onclick="sendText()">Speak Text</button>
+
+  <script>
+    const conversation = document.getElementById("conversation");
+    const ws = new WebSocket(`ws://${location.host}/ws`);
+
+    ws.onmessage = (ev) => {
+      const p = document.createElement("p");
+      p.className = "user";
+      p.textContent = ev.data;
+      conversation.appendChild(p);
+      conversation.scrollTop = conversation.scrollHeight;
+    };
+
+    function sendText() {
+      const text = document.getElementById("ttsInput").value;
+      ws.send(text);
+      const p = document.createElement("p");
+      p.className = "ai";
+      p.textContent = "You said: " + text;
+      conversation.appendChild(p);
+    }
+  </script>
+</body>
+</html>
