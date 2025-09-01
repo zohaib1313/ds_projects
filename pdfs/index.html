@@ -1,0 +1,37 @@
+import os
+import shutil
+import tkinter as tk
+from tkinter import filedialog
+
+def split_pdfs_into_folders(source_folder, group_size=4):
+    # Create destination folder
+    destination_folder = os.path.join(source_folder, "destination")
+    os.makedirs(destination_folder, exist_ok=True)
+
+    # Get all files in the folder (as they appear in filesystem, no sorting)
+    files = [f for f in os.listdir(source_folder) if f.lower().endswith(".pdf")]
+
+    # Enumerate files in groups
+    for i in range(0, len(files), group_size):
+        subfolder_name = f"group_{i // group_size + 1}"
+        subfolder_path = os.path.join(destination_folder, subfolder_name)
+        os.makedirs(subfolder_path, exist_ok=True)
+
+        for file in files[i:i + group_size]:
+            src = os.path.join(source_folder, file)
+            dst = os.path.join(subfolder_path, file)
+            shutil.copy2(src, dst)
+
+    print(f"✅ PDFs split into subfolders inside: {destination_folder}")
+
+
+if __name__ == "__main__":
+    # GUI to select folder
+    root = tk.Tk()
+    root.withdraw()  # Hide root window
+    folder_selected = filedialog.askdirectory(title="Select Folder Containing PDFs")
+
+    if folder_selected:
+        split_pdfs_into_folders(folder_selected)
+    else:
+        print("No folder selected.")
