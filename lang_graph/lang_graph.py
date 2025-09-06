@@ -36,7 +36,7 @@ graph = graph_builder.compile(checkpointer=memory)
 
 
 def run_graph(user_input: str, thread_id: int):
-    event = graph.invoke({"messages": [user_input]}, config={"configurable": {"thread_id": thread_id}})  # type: ignore
+    event = graph.invoke({"messages": [user_input]}, config={"configurable": {"thread_id": thread_id}})
     print(json.dumps(event, indent=2, default=str))
 
 
